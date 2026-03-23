@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bobby Store | Luxury Experience</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Prompt:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --light-blue: #e3f2fd;
+            --luxury-gold: #d4af37;
+            --luxury-gray: #888;
+            --accent-red: #ff5252;
+            --white: #ffffff;
+            --black: #1a1a1a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Prompt', sans-serif; transition: all 0.3s ease; }
+        body { background-color: #fcfcfc; color: var(--black); overflow-x: hidden; }
+
+        header { background: var(--light-blue); padding: 15px; text-align: center; font-family: 'Cinzel', serif; font-weight: bold; font-size: 1.5rem; letter-spacing: 2px; }
+        nav { display: flex; justify-content: space-around; background: var(--white); border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 10; }
+        nav button { flex: 1; padding: 15px; border: none; background: none; cursor: pointer; font-size: 0.9rem; color: var(--luxury-gray); }
+        nav button.active { color: var(--black); border-bottom: 2px solid var(--black); font-weight: 600; }
+
+        .container { padding: 20px; max-width: 600px; margin: auto; min-height: 80vh; }
+        .hidden { display: none !important; }
+        .order-count { color: var(--luxury-gray); text-align: center; margin-bottom: 20px; font-size: 0.9rem; }
+
+        .card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; }
+        button:active { transform: scale(0.95); }
+        .btn-luxury { border-radius: 12px; border: none; cursor: pointer; font-weight: 500; }
+
+        .btn-review { background: linear-gradient(45deg, #ff5252, #ff7b54); color: white; width: 100%; padding: 15px; margin: 20px 0; }
+        .review-item { border-left: 3px solid var(--luxury-gold); }
+        .stars { color: #ffca28; margin-bottom: 5px; }
+
+        /* Overlay & Popup Styling */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(2px); }
+        .popup { background: white; padding: 25px; border-radius: 20px; width: 85%; max-width: 380px; text-align: center; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .popup input, .popup textarea { width: 100%; margin: 10px 0; padding: 12px; border-radius: 10px; border: 1px solid #eee; outline: none; background: #f9f9f9; }
+        
+        /* Close Button Styling */
+        .close-popup { position: absolute; top: 12px; right: 15px; background: none; border: none; font-size: 1.3rem; color: #ccc; cursor: pointer; line-height: 1; }
+        .close-popup:hover { color: #888; }
+
+        .loader-container { flex-direction: column; gap: 15px; display: flex; align-items: center; padding-top: 35px; /* space for close button */ }
+        .spinner { width: 40px; height: 40px; border: 3px solid #f3f3f3; border-top: 3px solid var(--luxury-gold); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .contact-info { text-align: center; font-size: 0.8rem; color: var(--accent-red); margin-bottom: 15px; }
+        .product-item { display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
+
+<header>BOBBY STORE</header>
+<nav>
+    <button id="nav-main" class="active" onclick="showPage('main')">หน้าหลัก (เครดิต)</button>
+    <button id="nav-shop" onclick="showPage('shop')">รายการสินค้า</button>
+</nav>
+
+<div class="container">
+    <div id="page-main">
+        <div class="order-count">มีการสั่งซื้อไปแล้ว <span id="count-text">0</span> ออเดอร์</div>
+        <div id="review-list"></div>
+        <button class="btn-luxury btn-review" onclick="togglePopup('review-popup', true)">Review</button>
+    </div>
+
+    <div id="page-shop" class="hidden">
+        <button class="btn-luxury" style="background: #f0f0f0; padding: 10px 20px; margin-bottom: 15px; width:100%;" onclick="adminAuth()">เพิ่มสินค้า (สำหรับแอดมิน)</button>
+        <p class="contact-info">หากสนใจกรุณาติดต่อเฟสบุ๊ค Chaiyamet Keatamornwet เท่านั้นครับ!</p>
+        <div id="product-list"></div>
+    </div>
+</div>
+
+<div id="overlay" class="overlay hidden">
+    
+    <div id="review-popup" class="popup hidden">
+        <button class="close-popup" onclick="togglePopup('', false)">×</button>
+        <h3 style="font-family:'Cinzel'">Rate Us</h3>
+        <div id="star-selector" style="font-size: 1.8rem; margin: 15px 0; color: #ffca28; cursor:pointer;">
+            <span onclick="setRating(1)">☆</span><span onclick="setRating(2)">☆</span><span onclick="setRating(3)">☆</span><span onclick="setRating(4)">☆</span><span onclick="setRating(5)">☆</span>
+        </div>
+        <input type="text" id="rev-product" placeholder="ชื่อสินค้า">
+        <textarea id="rev-text" placeholder="รีวิวของคุณ..." rows="3"></textarea>
+        <button class="btn-luxury" style="background:var(--black); color:white; width:100%; padding:15px;" onclick="submitReview()">เพิ่มรีวิว</button>
+    </div>
+
+    <div id="loading-popup" class="popup loader-container hidden">
+        <div class="spinner"></div>
+        <p style="font-family:'Cinzel'; letter-spacing:1px; margin-top:10px;">Please wait</p>
+        <small id="loading-subtext" style="color:var(--luxury-gray)"></small>
+        <button class="close-popup" onclick="togglePopup('', false)">×</button>
+    </div>
+
+    <div id="success-popup" class="popup hidden">
+        <button class="close-popup" onclick="togglePopup('', false)">×</button>
+        <p style="font-size: 1.1rem; font-weight: 500; padding-top: 15px;">ขอบคุณที่รีวิวให้ร้านเรานะคับ</p>
+        <p style="color:var(--luxury-gray); font-size:0.75rem; margin:15px 0;">- bobby store -</p>
+        <button class="btn-luxury" style="background:var(--black); color:white; width:100%; padding:12px;" onclick="togglePopup('', false)">continue</button>
+    </div>
+
+    <div id="admin-panel" class="popup hidden">
+        <button class="close-popup" onclick="togglePopup('', false)">×</button>
+        <h3>จัดการสินค้า</h3>
+        <div id="admin-product-list" style="max-height: 250px; overflow-y: auto; text-align: left; margin: 20px 0; border-top: 1px solid #eee; padding-top: 10px;"></div>
+        <button class="btn-luxury" style="background:var(--luxury-gold); color:white; width:100%; padding:12px; margin-bottom:10px;" onclick="togglePopup('add-product-popup', true)">เพิ่มสินค้าเข้าสู่ร้าน</button>
+    </div>
+
+    <div id="add-product-popup" class="popup hidden">
+        <button class="close-popup" onclick="togglePopup('admin-panel', true)">×</button>
+        <h3>เพิ่มสินค้าใหม่</h3>
+        <input type="text" id="p-name" placeholder="ชื่อสินค้า">
+        <input type="number" id="p-price" placeholder="ราคา">
+        <input type="number" id="p-stock" placeholder="จำนวนคงเหลือ">
+        <button class="btn-luxury" style="background:var(--black); color:white; width:100%; padding:12px;" onclick="addProduct()">เพิ่มสินค้า</button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAjb70998FPwetVcxh5xWhuzPRapWQ_q88",
+        projectId: "answer-game-72e56",
+        databaseURL: "https://answer-game-72e56-default-rtdb.firebaseio.com/",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    let currentRating = 0;
+    let loadingTimeout; // เพื่อสกัดการทำงานหากกดปิดตอนโหลด
+
+    window.showPage = (page) => {
+        document.getElementById('page-main').classList.toggle('hidden', page !== 'main');
+        document.getElementById('page-shop').classList.toggle('hidden', page !== 'shop');
+        document.getElementById('nav-main').classList.toggle('active', page === 'main');
+        document.getElementById('nav-shop').classList.toggle('active', page === 'shop');
+        togglePopup('', false); // ปิด popup เวลาเปลี่ยนหน้า
+    };
+
+    window.togglePopup = (id, show) => {
+        clearTimeout(loadingTimeout); // ยกเลิกการโหลดค้างถ้ามีการปิดหรือเปลี่ยน popup
+        const overlay = document.getElementById('overlay');
+        const popups = document.querySelectorAll('.popup');
+        
+        if (!show) {
+            overlay.classList.add('hidden');
+            popups.forEach(p => p.classList.add('hidden'));
+            return;
+        }
+
+        overlay.classList.remove('hidden');
+        popups.forEach(p => p.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+    };
+
+    window.setRating = (n) => {
+        currentRating = n;
+        const stars = document.querySelectorAll('#star-selector span');
+        stars.forEach((s, i) => s.innerText = i < n ? '★' : '☆');
+    };
+
+    window.submitReview = () => {
+        const product = document.getElementById('rev-product').value;
+        const text = document.getElementById('rev-text').value;
+        if(!product || !text || currentRating === 0) return alert('กรุณากรอกข้อมูลให้ครบ');
+
+        togglePopup('loading-popup', true);
+        document.getElementById('loading-subtext').innerText = "กำลังลงรีวิวใหม่";
+
+        loadingTimeout = setTimeout(() => {
+            push(ref(db, 'reviews'), { product, text, rating: currentRating, timestamp: Date.now() });
+            document.getElementById('rev-product').value = "";
+            document.getElementById('rev-text').value = "";
+            setRating(0);
+            togglePopup('success-popup', true);
+        }, 5000);
+    };
+
+    window.adminAuth = () => {
+        const pass = prompt("รหัสผ่านแอดมิน:");
+        if(pass === "18112012") {
+            togglePopup('loading-popup', true);
+            document.getElementById('loading-subtext').innerText = "กำลังตรวจสอบสิทธิ์";
+            loadingTimeout = setTimeout(() => togglePopup('admin-panel', true), 5000);
+        } else if(pass !== null) alert("รหัสผ่านไม่ถูกต้อง");
+    };
+
+    window.addProduct = () => {
+        const name = document.getElementById('p-name').value;
+        const price = document.getElementById('p-price').value;
+        const stock = document.getElementById('p-stock').value;
+        if(!name || !price || !stock) return alert('กรอกข้อมูลไม่ครบ');
+
+        togglePopup('loading-popup', true);
+        document.getElementById('loading-subtext').innerText = "กำลังบันทึกข้อมูล";
+        
+        loadingTimeout = setTimeout(() => {
+            push(ref(db, 'products'), { name, price, stock });
+            document.getElementById('p-name').value = "";
+            document.getElementById('p-price').value = "";
+            document.getElementById('p-stock').value = "";
+            togglePopup('admin-panel', true); // กลับไปหน้าจัดการ
+        }, 2000);
+    };
+
+    window.deleteProduct = (id) => {
+        if(confirm('ลบสินค้านี้ใช่หรือไม่?')) remove(ref(db, `products/${id}`));
+    };
+
+    // ปิด popup เมื่อคลิกพื้นที่สีดำรอบๆ
+    document.getElementById('overlay').addEventListener('click', function(e) {
+        if (e.target === this) {
+            togglePopup('', false);
+        }
+    });
+
+    onValue(ref(db, 'reviews'), (snap) => {
+        const list = document.getElementById('review-list');
+        const count = document.getElementById('count-text');
+        list.innerHTML = "";
+        if(!snap.exists()) return list.innerHTML = "<p style='text-align:center;color:gray;margin-top:20px;'>ยังมีไม่รีวิวสำหรับตอนนี้ครับ!</p>";
+        
+        let i = 0;
+        snap.forEach(child => {
+            const data = child.val();
+            list.insertAdjacentHTML('afterbegin', `
+                <div class="card review-item">
+                    <div class="stars">${'★'.repeat(data.rating)}${'☆'.repeat(5-data.rating)}</div>
+                    <strong>${data.product}</strong>
+                    <p style="font-size:0.85rem; color:#555; margin-top:5px;">${data.text}</p>
+                </div>`);
+            i++;
+        });
+        count.innerText = i;
+    });
+
+    onValue(ref(db, 'products'), (snap) => {
+        const list = document.getElementById('product-list');
+        const adminList = document.getElementById('admin-product-list');
+        list.innerHTML = ""; adminList.innerHTML = "";
+        snap.forEach(child => {
+            const data = child.val();
+            const id = child.key;
+            list.innerHTML += `
+                <div class="card product-item">
+                    <div>
+                        <strong>${data.name}</strong><br>
+                        <small style="color:gray;">ราคา: ${data.price}฿ | คงเหลือ: ${data.stock}</small>
+                    </div>
+                </div>`;
+            adminList.innerHTML += `
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #f5f5f5;">
+                    <span style="font-size:0.9rem;">${data.name}</span>
+                    <button onclick="deleteProduct('${id}')" style="background:none; border:none; color:red; cursor:pointer;">🗑️</button>
+                </div>`;
+        });
+    });
+</script>
+</body>
+</html>
